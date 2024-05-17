@@ -1,0 +1,13 @@
+version: "3.8"
+
+services:
+  spring-app:
+    build:
+      context: .
+    ports:
+      - "8090:8090"
+    expose:
+      - "8090"
+
+volumes:
+  spring-app:
