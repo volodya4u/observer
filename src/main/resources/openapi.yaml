@@ -1,0 +1,77 @@
+openapi: 3.1.0
+info:
+  title: Observer API
+  description: API for accessing repository details
+  version: 1.0.0
+servers:
+  - url: https://developer.github.com/v3
+paths:
+  /repositories/{username}:
+    get:
+      summary: Get repository details for a user
+      description: |
+        Retrieves the details of repositories belonging to the specified user.
+      parameters:
+        - name: username
+          in: path
+          description: The username of the user whose repositories to retrieve
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RepositoryDetails'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '406':
+          description: Not Acceptable
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Only JSON requests are accepted.
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+components:
+  schemas:
+    RepositoryDetails:
+      type: object
+      properties:
+        name:
+          type: string
+        owner:
+          type: string
+        branches:
+          type: array
+          items:
+            $ref: '#/components/schemas/BranchDetails'
+    BranchDetails:
+      type: object
+      properties:
+        name:
+          type: string
+        lastCommitSha:
+          type: string
