@@ -1,0 +1,160 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  ClusterName:
+    Type: String
+    Default: observer-cluster
+    Description: Name of the ECS cluster where the service will be deployed
+  ServiceName:
+    Type: String
+    Default: observer-service
+    Description: Name of the ECS service
+  VpcId:
+    Type: String
+    Default: vpc-076d33d96263ac923
+    Description: ID of the VPC where the subnets will be created
+Resources:
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: observer-family
+      Memory: '1024'
+      ContainerDefinitions:
+        - Name: observer-container
+          Image: 211125372735.dkr.ecr.us-east-1.amazonaws.com/observer:latest
+          PortMappings:
+            - ContainerPort: 80
+
+  ApiGateway:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      ProtocolType: HTTP
+      Name: ObserverAPI
+
+  ApiGatewayLogGroup:
+    Type: "AWS::Logs::LogGroup"
+    Properties:
+      LogGroupName: !Sub "/aws/apigateway/${ApiGateway}/stage"
+      RetentionInDays: 7
+
+  ApiGatewayStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref ApiGateway
+      Description: "Initial version of the API"
+      StageName: v1
+      AutoDeploy: true
+      AccessLogSettings:
+        DestinationArn: !GetAtt "ApiGatewayLogGroup.Arn"
+        Format: '{"requestId":"$context.requestId","ip":"$context.identity.sourceIp","requestTime":"$context.requestTime","httpMethod":"$context.httpMethod","routeKey":"$context.routeKey","status":"$context.status","responseLength":"$context.responseLength","$context.authorizer.error","$context.error.message","$context.integration.error"}'
+
+  ApiGatewayIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref ApiGateway
+      IntegrationType: AWS_PROXY
+      PayloadFormatVersion: "2.0"
+      IntegrationUri: !Sub 'arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/${ObserverLambdaFunction.Arn}/invocations'
+
+  ApiGatewayRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ApiGateway
+      RouteKey: 'GET /repositories/{username}'
+      Target: !Join
+        - /
+        - - integrations
+          - !Ref ApiGatewayIntegration
+
+  ObserverLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Role: arn:aws:iam::211125372735:role/lambda-role
+      Code:
+        ImageUri: 211125372735.dkr.ecr.us-east-1.amazonaws.com/observer:latest
+      PackageType: Image
+      Timeout: 90
+      TracingConfig:
+        Mode: Active
+      Environment:
+        Variables:
+          LOG_LEVEL: INFO
+      VpcConfig:
+        SecurityGroupIds:
+          - sg-0165a546795c82f37
+        SubnetIds:
+          - subnet-031e356850a72417d
+
+  LambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${ObserverLambdaFunction}"
+      RetentionInDays: 7
+
+  LambdaFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ObserverLambdaFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+
+  NatGatewayEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGatewayEIP.AllocationId
+      SubnetId: subnet-0f3b27573642c8cb3
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VpcId
+
+  PrivateRoute:
+    Type: AWS::EC2::Route
+    DependsOn: NatGateway
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway
+
+  PrivateSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: subnet-031e356850a72417d
+      RouteTableId: !Ref PrivateRouteTable
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VpcId
+      InternetGatewayId: igw-0607207b7f571e789
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VpcId
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: igw-0607207b7f571e789
+
+  PublicSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: subnet-0f3b27573642c8cb3
+      RouteTableId: !Ref PublicRouteTable
+
+  ApiGatewayDeployment:
+    Type: AWS::ApiGatewayV2::Deployment
+    DependsOn:
+      - ApiGatewayRoute
+    Properties:
+      ApiId: !Ref ApiGateway
