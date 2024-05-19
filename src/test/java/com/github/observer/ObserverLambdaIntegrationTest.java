@@ -2,7 +2,6 @@ package com.github.observer;
 
 import java.io.IOException;
 
-import com.github.observer.lambda.ObserverLambdaHandler;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -19,7 +18,7 @@ public class ObserverLambdaIntegrationTest {
 
     @Test
     void whenTheUsersPathIsInvokedViaLambda_thenShouldReturnAList() throws IOException {
-        ObserverLambdaHandler lambdaHandler = new ObserverLambdaHandler();
+        LambdaHandler lambdaHandler = new LambdaHandler();
         AwsProxyRequest req = new AwsProxyRequestBuilder("/repositories/volodya4u", "GET").build();
         AwsProxyResponse resp = lambdaHandler.handleRequest(req, lambdaContext);
         Assertions.assertNotNull(resp.getBody());
@@ -28,7 +27,7 @@ public class ObserverLambdaIntegrationTest {
 
     @Test
     void whenWrongPathPathIsInvokedViaLambda_thenShouldBadRequest() throws IOException {
-        ObserverLambdaHandler lambdaHandler = new ObserverLambdaHandler();
+        LambdaHandler lambdaHandler = new LambdaHandler();
         AwsProxyRequest req = new AwsProxyRequestBuilder("/repositories/2/volodya4u", "GET").build();
         AwsProxyResponse resp = lambdaHandler.handleRequest(req, lambdaContext);
         Assertions.assertEquals(400, resp.getStatusCode());
@@ -36,7 +35,7 @@ public class ObserverLambdaIntegrationTest {
 
     @Test
     void whenWrongAcceptHeaderIsInvokedViaLambda_thenShouldNotFound() throws IOException {
-        ObserverLambdaHandler lambdaHandler = new ObserverLambdaHandler();
+        LambdaHandler lambdaHandler = new LambdaHandler();
         AwsProxyRequest req
                 = new AwsProxyRequestBuilder("/repositories/volodya4u", "GET")
                 .header("Accept", "application/xml")
