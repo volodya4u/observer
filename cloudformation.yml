@@ -25,45 +25,58 @@ Resources:
             - ContainerPort: 80
 
   ApiGateway:
-    Type: AWS::ApiGatewayV2::Api
+    Type: AWS::ApiGateway::RestApi
     Properties:
-      ProtocolType: HTTP
       Name: ObserverAPI
+      EndpointConfiguration:
+        Types:
+          - EDGE
+
+  RepositoriesResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      RestApiId: !Ref ApiGateway
+      PathPart: 'repositories'
+
+  ApiGatewayResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !Ref RepositoriesResource
+      RestApiId: !Ref ApiGateway
+      PathPart: '{username}'
+
+  ApiGatewayMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref ApiGatewayResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/${ObserverLambdaFunction.Arn}/invocations'
+      MethodResponses:
+        - StatusCode: '200'
+          ResponseModels:
+            "application/json": "Empty"
 
   ApiGatewayLogGroup:
-    Type: "AWS::Logs::LogGroup"
+    Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub "/aws/apigateway/${ApiGateway}/stage"
       RetentionInDays: 7
 
   ApiGatewayStage:
-    Type: AWS::ApiGatewayV2::Stage
+    Type: AWS::ApiGateway::Stage
     Properties:
-      ApiId: !Ref ApiGateway
-      Description: "Initial version of the API"
+      RestApiId: !Ref ApiGateway
+      DeploymentId: !Ref ApiGatewayDeployment
       StageName: v1
-      AutoDeploy: true
-      AccessLogSettings:
+      AccessLogSetting:
         DestinationArn: !GetAtt "ApiGatewayLogGroup.Arn"
         Format: '{"requestId":"$context.requestId","ip":"$context.identity.sourceIp","requestTime":"$context.requestTime","httpMethod":"$context.httpMethod","routeKey":"$context.routeKey","status":"$context.status","responseLength":"$context.responseLength","$context.authorizer.error","$context.error.message","$context.integration.error"}'
-
-  ApiGatewayIntegration:
-    Type: AWS::ApiGatewayV2::Integration
-    Properties:
-      ApiId: !Ref ApiGateway
-      IntegrationType: AWS_PROXY
-      PayloadFormatVersion: "2.0"
-      IntegrationUri: !Sub 'arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/${ObserverLambdaFunction.Arn}/invocations'
-
-  ApiGatewayRoute:
-    Type: AWS::ApiGatewayV2::Route
-    Properties:
-      ApiId: !Ref ApiGateway
-      RouteKey: 'GET /repositories/{username}'
-      Target: !Join
-        - /
-        - - integrations
-          - !Ref ApiGatewayIntegration
 
   ObserverLambdaFunction:
     Type: AWS::Lambda::Function
@@ -71,8 +84,11 @@ Resources:
       Role: arn:aws:iam::211125372735:role/lambda-role
       Code:
         ImageUri: 211125372735.dkr.ecr.us-east-1.amazonaws.com/observer:latest
+      Architectures:
+        - x86_64
       PackageType: Image
-      Timeout: 90
+      Timeout: 60
+      MemorySize: 1024
       TracingConfig:
         Mode: Active
       Environment:
@@ -153,8 +169,7 @@ Resources:
       RouteTableId: !Ref PublicRouteTable
 
   ApiGatewayDeployment:
-    Type: AWS::ApiGatewayV2::Deployment
-    DependsOn:
-      - ApiGatewayRoute
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: ApiGatewayMethod
     Properties:
-      ApiId: !Ref ApiGateway
+      RestApiId: !Ref ApiGateway
