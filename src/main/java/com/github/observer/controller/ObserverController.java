@@ -27,7 +27,7 @@ public class ObserverController {
 
     @GetMapping(value = "/{username}", produces = MediaType.APPLICATION_JSON_VALUE)
     public Mono<ResponseEntity<List<RepositoryDetails>>> getGithubRepositories(@PathVariable String username) {
-        log.info("ObserverController execution with username: {}", username);
+        log.debug("ObserverController execution with username: {}", username);
         return observerService.findRepositories(username)
                 .collectList()
                 .map(ResponseEntity::ok)

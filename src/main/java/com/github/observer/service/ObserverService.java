@@ -25,7 +25,7 @@ public class ObserverService {
 
     public Flux<RepositoryDetails> findRepositories(@NotBlank String username) {
 
-        log.info("Getting repositories for user: {}", username);
+        log.debug("Getting repositories for user: {}", username);
         return observerWebClient.get()
                 .uri("/users/{username}/repos", username)
                 .retrieve()
