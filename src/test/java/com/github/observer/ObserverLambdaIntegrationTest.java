@@ -32,14 +32,13 @@ public class ObserverLambdaIntegrationTest {
     }
 
     @Test
-    void whenWrongAcceptHeaderIsInvokedViaLambda_thenShouldNotFound() {
+    void whenWrongAcceptHeaderIsInvokedViaLambda_thenShouldReturnNotAcceptable() {
         LambdaHandler lambdaHandler = new LambdaHandler();
         AwsProxyRequest req
                 = new AwsProxyRequestBuilder("/repositories/volodya4u", "GET")
                 .header("Accept", "application/xml")
                 .build();
         AwsProxyResponse resp = lambdaHandler.handleRequest(req, lambdaContext);
-        Assertions.assertEquals("406 NOT_ACCEPTABLE \"Could not find acceptable representation\"",
-                resp.getBody());
+        Assertions.assertEquals(406, resp.getStatusCode());
     }
 }

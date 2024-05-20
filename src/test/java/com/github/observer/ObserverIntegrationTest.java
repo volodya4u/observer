@@ -72,10 +72,8 @@ class ObserverIntegrationTest {
                 .jsonPath("$.message").isEqualTo("User not found: " + username);
     }
 
-    // HttpMediaTypeNotSupportedException raises HttpStatus 400.
-    // We handle this exception in GlobalExceptionHandler and return error message in correct format
     @Test
-    @DisplayName("Should return 400 when Accept header is not application/json")
+    @DisplayName("Should return 406 when Accept header is application/xml")
     void findRepositories_InvalidAcceptHeader_ShouldReturnNotAcceptable() {
         String username = "validUser";
 
@@ -88,6 +86,6 @@ class ObserverIntegrationTest {
         observerWebClient.get().uri("/repositories/{username}", username)
                 .accept(MediaType.APPLICATION_XML)
                 .exchange()
-                .expectStatus().isEqualTo(HttpStatus.BAD_REQUEST);
+                .expectStatus().isEqualTo(HttpStatus.NOT_ACCEPTABLE);
     }
 }
