@@ -22,8 +22,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
     }
 
-    @ExceptionHandler({HttpMediaTypeNotAcceptableException.class, NotAcceptableStatusException.class})
+    @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
     public ResponseEntity<Map<String, Object>> handleHttpMediaTypeNotAcceptableException(HttpMediaTypeNotAcceptableException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("status", HttpStatus.NOT_ACCEPTABLE.value());
+        body.put("message", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(body);
+    }
+
+    @ExceptionHandler(NotAcceptableStatusException.class)
+    public ResponseEntity<Map<String, Object>> handleNotAcceptableStatusException(NotAcceptableStatusException ex) {
         Map<String, Object> body = new HashMap<>();
         body.put("status", HttpStatus.NOT_ACCEPTABLE.value());
         body.put("message", ex.getMessage());
