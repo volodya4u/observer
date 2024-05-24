@@ -1,10 +1,7 @@
 package com.github.observer;
 
 import com.github.observer.exception.UserNotFoundException;
-import com.github.observer.model.Branch;
-import com.github.observer.model.Owner;
-import com.github.observer.model.Repository;
-import com.github.observer.model.RepositoryDetails;
+import com.github.observer.model.*;
 import com.github.observer.service.ObserverService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,7 +10,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.any;
@@ -57,11 +57,12 @@ public class ObserverServiceTest {
         when(responseSpec.bodyToFlux(Repository.class)).thenReturn(Flux.just(repository1, repository2));
         when(responseSpec.bodyToFlux(Branch.class)).thenReturn(Flux.empty());
 
-        Flux<RepositoryDetails> result = observerService.findRepositories(userName);
+        Mono<List<RepositoryDetails>> result = observerService.findRepositories(userName, false);
 
         StepVerifier.create(result)
-                .expectNextMatches(repo -> repo.getName().equals(repo1) && repo.getOwner().equals(userName))
-                .expectNextMatches(repo -> repo.getName().equals(repo2) && repo.getOwner().equals(userName))
+                .expectNextMatches(repos -> repos.size() == 2 &&
+                        repos.stream().anyMatch(repo -> repo.getName().equals(repo1) && repo.getOwner().equals(userName)) &&
+                        repos.stream().anyMatch(repo -> repo.getName().equals(repo2) && repo.getOwner().equals(userName)))
                 .verifyComplete();
     }
 
@@ -76,10 +77,10 @@ public class ObserverServiceTest {
         when(responseSpec.onStatus(any(), any())).thenReturn(responseSpec);
         when(responseSpec.bodyToFlux(Repository.class)).thenReturn(Flux.empty());
 
-        Flux<RepositoryDetails> result = observerService.findRepositories(userName);
+        Mono<List<RepositoryDetails>> result = observerService.findRepositories(userName, false);
 
         StepVerifier.create(result)
-                .expectNextCount(0)
+                .expectNextMatches(List::isEmpty)
                 .verifyComplete();
     }
 
@@ -94,7 +95,7 @@ public class ObserverServiceTest {
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.onStatus(any(), any())).thenThrow(new UserNotFoundException(errorMessage));
 
-        assertThatThrownBy(() -> observerService.findRepositories(userName))
+        assertThatThrownBy(() -> observerService.findRepositories(userName, false))
                 .isInstanceOf(UserNotFoundException.class);
     }
 }

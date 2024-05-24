@@ -16,7 +16,7 @@ import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
@@ -36,12 +36,13 @@ class ObserverIntegrationTest {
     @DisplayName("Should return list of repositories for valid username")
     void findRepositories_ValidUsername_ShouldReturnRepositories() {
         String username = "validUser";
+        boolean fork = true;
 
         RepositoryDetails repositoryDetails = new RepositoryDetails("repositoryName", "ownerLogin",
                 List.of(new BranchDetails("branchName", "sha")));
-        given(observerService.findRepositories(username)).willReturn(Flux.just(repositoryDetails));
+        given(observerService.findRepositories(username, fork)).willReturn(Mono.just(List.of(repositoryDetails)));
 
-        observerWebClient.get().uri("/repositories/{username}", username)
+        observerWebClient.get().uri("/repositories/{username}/{fork}", username, fork)
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus().isOk()
@@ -54,12 +55,13 @@ class ObserverIntegrationTest {
     @DisplayName("Should return 404 for non-existing GitHub user with custom message")
     void findRepositories_NonExistingUser_ShouldReturnCustomNotFoundMessage() {
         String username = "nonExistingUser";
+        boolean fork = true;
 
         given(observerService
-                .findRepositories(username))
+                .findRepositories(username, fork))
                 .willThrow(new UserNotFoundException("User not found: " + username));
 
-        observerWebClient.get().uri("/repositories/{username}", username)
+        observerWebClient.get().uri("/repositories/{username}/{fork}", username, fork)
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus().isNotFound()
@@ -72,12 +74,13 @@ class ObserverIntegrationTest {
     @DisplayName("Should return 406 when Accept header is application/xml")
     void findRepositories_InvalidAcceptHeader_ShouldReturnNotAcceptable() {
         String username = "validUser";
+        boolean fork = true;
 
         RepositoryDetails repositoryDetails = new RepositoryDetails("repositoryName", "ownerLogin",
         List.of(new BranchDetails("branchName", "sha")));
-        given(observerService.findRepositories(username)).willReturn(Flux.just(repositoryDetails));
+        given(observerService.findRepositories(username, fork)).willReturn(Mono.just(List.of(repositoryDetails)));
 
-        observerWebClient.get().uri("/repositories/{username}", username)
+        observerWebClient.get().uri("/repositories/{username}/{fork}", username, fork)
                 .accept(MediaType.APPLICATION_XML)
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.NOT_ACCEPTABLE);

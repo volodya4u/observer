@@ -10,7 +10,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.ObjectUtils;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -31,13 +30,13 @@ public class ObserverControllerTest {
     void testGetGithubRepositories_UserFound_ReturnsRepositories() {
         String username = "testUser";
 
-        when(observerService.findRepositories(username)).thenReturn(Flux.just(
+        when(observerService.findRepositories(username, true)).thenReturn(Mono.just(List.of(
                 new RepositoryDetails("repo1", "owner1", List.of()),
                 new RepositoryDetails("repo2", "owner2", List.of())
-        ));
+        )));
 
         Mono<ResponseEntity<List<RepositoryDetails>>> result
-                = observerController.getGithubRepositories(username);
+                = observerController.getGithubRepositories(username, true);
 
         StepVerifier.create(result)
                 .expectNextMatches(responseEntity -> {
@@ -53,10 +52,10 @@ public class ObserverControllerTest {
     void testGetGithubRepositories_UserNotFound_ReturnsNotFound() {
         String username = "unknownUser";
 
-        when(observerService.findRepositories(username)).thenReturn(Flux.empty());
+        when(observerService.findRepositories(username, true)).thenReturn(Mono.just(List.of()));
 
         Mono<ResponseEntity<List<RepositoryDetails>>> result
-                = observerController.getGithubRepositories(username);
+                = observerController.getGithubRepositories(username, true);
 
         StepVerifier.create(result)
                 .expectNextMatches(responseEntity ->

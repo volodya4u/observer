@@ -25,11 +25,11 @@ public class ObserverController {
         this.observerService = observerService;
     }
 
-    @GetMapping(value = "/{username}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Mono<ResponseEntity<List<RepositoryDetails>>> getGithubRepositories(@PathVariable String username) {
+    @GetMapping(value = "/{username}/{fork}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Mono<ResponseEntity<List<RepositoryDetails>>> getGithubRepositories(@PathVariable String username,
+                                                                               @PathVariable boolean fork) {
         log.debug("ObserverController execution with username: {}", username);
-        return observerService.findRepositories(username)
-                .collectList()
+        return observerService.findRepositories(username, fork)
                 .map(ResponseEntity::ok)
                 .defaultIfEmpty(ResponseEntity.notFound().build());
     }

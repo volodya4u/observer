@@ -17,14 +17,14 @@ public class ObserverLambdaIntegrationTest {
     @Test
     void whenTheUsersPathIsInvokedViaLambda_thenShouldReturnAList() {
         LambdaHandler lambdaHandler = new LambdaHandler();
-        AwsProxyRequest req = new AwsProxyRequestBuilder("/repositories/volodya4u", "GET").build();
+        AwsProxyRequest req = new AwsProxyRequestBuilder("/repositories/volodya4u/true", "GET").build();
         AwsProxyResponse resp = lambdaHandler.handleRequest(req, lambdaContext);
         Assertions.assertNotNull(resp.getBody());
         Assertions.assertEquals(200, resp.getStatusCode());
     }
 
     @Test
-    void whenWrongPathPathIsInvokedViaLambda_thenShouldBadRequest() {
+    void whenWrongPathIsInvokedViaLambda_thenShouldBadRequest() {
         LambdaHandler lambdaHandler = new LambdaHandler();
         AwsProxyRequest req = new AwsProxyRequestBuilder("/repositories/2/volodya4u", "GET").build();
         AwsProxyResponse resp = lambdaHandler.handleRequest(req, lambdaContext);
@@ -35,7 +35,7 @@ public class ObserverLambdaIntegrationTest {
     void whenWrongAcceptHeaderIsInvokedViaLambda_thenShouldReturnNotAcceptable() {
         LambdaHandler lambdaHandler = new LambdaHandler();
         AwsProxyRequest req
-                = new AwsProxyRequestBuilder("/repositories/volodya4u", "GET")
+                = new AwsProxyRequestBuilder("/repositories/volodya4u/true", "GET")
                 .header("Accept", "application/xml")
                 .build();
         AwsProxyResponse resp = lambdaHandler.handleRequest(req, lambdaContext);

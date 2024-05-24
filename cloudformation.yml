@@ -39,12 +39,19 @@ Resources:
       RestApiId: !Ref ApiGateway
       PathPart: 'repositories'
 
-  ApiGatewayResource:
+  UsernameResource:
     Type: AWS::ApiGateway::Resource
     Properties:
       ParentId: !Ref RepositoriesResource
       RestApiId: !Ref ApiGateway
       PathPart: '{username}'
+
+  ApiGatewayResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !Ref UsernameResource
+      RestApiId: !Ref ApiGateway
+      PathPart: '{fork}'
 
   ApiGatewayMethod:
     Type: AWS::ApiGateway::Method

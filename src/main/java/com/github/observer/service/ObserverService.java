@@ -13,6 +13,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 @Slf4j
 @Service
 public class ObserverService {
@@ -23,7 +25,7 @@ public class ObserverService {
         this.observerWebClient = observerWebClient;
     }
 
-    public Flux<RepositoryDetails> findRepositories(@NotBlank String username) {
+    public Mono<List<RepositoryDetails>> findRepositories(@NotBlank String username, boolean fork) {
 
         log.debug("Getting repositories for user: {}", username);
         return observerWebClient.get()
@@ -32,12 +34,13 @@ public class ObserverService {
                 .onStatus(HttpStatusCode::is4xxClientError, clientResponse ->
                         Mono.error(new UserNotFoundException("User not found: " + username)))
                 .bodyToFlux(Repository.class)
-                .filter(repository -> !repository.isFork())
+                .filter(repository -> repository.isFork() == fork)
                 .flatMap(this::convertToRepositoryDetails)
-                .doOnComplete(() -> log.info("Finished getting repositories for user: {}", username));
+                .doOnComplete(() -> log.info("Finished getting repositories for user: {}", username))
+                .collectList();
     }
 
-    public Flux<RepositoryDetails> convertToRepositoryDetails(Repository repository) {
+    private Flux<RepositoryDetails> convertToRepositoryDetails(Repository repository) {
         return getBranches(repository.getOwner().getLogin() + "/" + repository.getName())
                 .collectList()
                 .map(branches -> new RepositoryDetails(repository.getName(),
@@ -45,7 +48,7 @@ public class ObserverService {
                 .flux();
     }
 
-    public Flux<BranchDetails> getBranches(String repositoryFullName) {
+    private Flux<BranchDetails> getBranches(String repositoryFullName) {
         return observerWebClient.get()
                 .uri("/repos/" + repositoryFullName + "/branches")
                 .retrieve()

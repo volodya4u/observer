@@ -4,7 +4,7 @@ Observer API is a RESTful service that provides access to repository details of 
 
 ## Overview
 
-The main functionality of the application is to list all repositories of a given GitHub username which are not forks. The API provides:
+The main functionality of the application is to list all repositories of a given GitHub username and given fork property. The API provides:
 
 - Repository Name
 - Owner Login
@@ -46,11 +46,12 @@ docker-compose up
 ## Usage
 To fetch repositories for a specific GitHub user:
 ```bash
-GET /repositories/{username}
+GET /repositories/{username}/{fork}
 Accept: application/json
 ```
 
 Replace `{username}` with the desired GitHub username.
+Replace `{fork}` with the desired boolean fork property.
 
 ## **Components**
 
