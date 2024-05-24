@@ -5,6 +5,7 @@ import com.github.observer.model.Branch;
 import com.github.observer.model.BranchDetails;
 import com.github.observer.model.Repository;
 import com.github.observer.model.RepositoryDetails;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import jakarta.validation.constraints.NotBlank;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatusCode;
@@ -25,6 +26,7 @@ public class ObserverService {
         this.observerWebClient = observerWebClient;
     }
 
+    @CircuitBreaker(name = "CircuitBreakerService", fallbackMethod = "fallbackMethod")
     public Mono<List<RepositoryDetails>> findRepositories(@NotBlank String username, boolean fork) {
 
         log.debug("Getting repositories for user: {}", username);
@@ -38,6 +40,11 @@ public class ObserverService {
                 .flatMap(this::convertToRepositoryDetails)
                 .doOnComplete(() -> log.info("Finished getting repositories for user: {}", username))
                 .collectList();
+    }
+
+    private Flux<RepositoryDetails> fallbackMethod(String username, boolean fork, Throwable t) {
+        log.error("Error getting repositories for user: {}, error: {}", username, t.getMessage());
+        throw new UserNotFoundException("User not found: " + username);
     }
 
     private Flux<RepositoryDetails> convertToRepositoryDetails(Repository repository) {
