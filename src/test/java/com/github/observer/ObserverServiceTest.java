@@ -43,7 +43,6 @@ public class ObserverServiceTest {
         String repo1 = "repo1";
         String repo2 = "repo2";
 
-        // Mock data
         Repository repository1 = new Repository(repo1, new Owner(userName), false);
         Repository repository2 = new Repository(repo2, new Owner(userName), false);
         when(observerWebClient.get()).thenReturn(requestHeadersUriSpec);
@@ -58,10 +57,8 @@ public class ObserverServiceTest {
         when(responseSpec.bodyToFlux(Repository.class)).thenReturn(Flux.just(repository1, repository2));
         when(responseSpec.bodyToFlux(Branch.class)).thenReturn(Flux.empty());
 
-        // Test
         Flux<RepositoryDetails> result = observerService.findRepositories(userName);
 
-        // Verify
         StepVerifier.create(result)
                 .expectNextMatches(repo -> repo.getName().equals(repo1) && repo.getOwner().equals(userName))
                 .expectNextMatches(repo -> repo.getName().equals(repo2) && repo.getOwner().equals(userName))
@@ -72,7 +69,6 @@ public class ObserverServiceTest {
     public void testFindRepositories_EmptyResponse() {
         String userName = "userWithNoRepositories";
 
-        // Mock empty response from WebClient
         when(observerWebClient.get()).thenReturn(requestHeadersUriSpec);
         when(requestHeadersUriSpec.uri("/users/{username}/repos", userName))
                 .thenReturn(requestHeadersSpec);
@@ -80,10 +76,8 @@ public class ObserverServiceTest {
         when(responseSpec.onStatus(any(), any())).thenReturn(responseSpec);
         when(responseSpec.bodyToFlux(Repository.class)).thenReturn(Flux.empty());
 
-        // Test
         Flux<RepositoryDetails> result = observerService.findRepositories(userName);
 
-        // Verify
         StepVerifier.create(result)
                 .expectNextCount(0)
                 .verifyComplete();
@@ -94,14 +88,12 @@ public class ObserverServiceTest {
         String userName = "unknownUser";
         String errorMessage = "User not found: " + userName;
 
-        // Mock WebClient behavior
         when(observerWebClient.get()).thenReturn(requestHeadersUriSpec);
         when(requestHeadersUriSpec.uri("/users/{username}/repos", userName))
                 .thenReturn(requestHeadersSpec);
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.onStatus(any(), any())).thenThrow(new UserNotFoundException(errorMessage));
 
-        // Perform the test
         assertThatThrownBy(() -> observerService.findRepositories(userName))
                 .isInstanceOf(UserNotFoundException.class);
     }

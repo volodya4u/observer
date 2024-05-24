@@ -31,17 +31,14 @@ public class ObserverControllerTest {
     void testGetGithubRepositories_UserFound_ReturnsRepositories() {
         String username = "testUser";
 
-        // Mock ObserverService behavior
         when(observerService.findRepositories(username)).thenReturn(Flux.just(
                 new RepositoryDetails("repo1", "owner1", List.of()),
                 new RepositoryDetails("repo2", "owner2", List.of())
         ));
 
-        // Perform the test
         Mono<ResponseEntity<List<RepositoryDetails>>> result
                 = observerController.getGithubRepositories(username);
 
-        // Verify the result
         StepVerifier.create(result)
                 .expectNextMatches(responseEntity -> {
                     List<RepositoryDetails> repositories = responseEntity.getBody();
@@ -56,14 +53,11 @@ public class ObserverControllerTest {
     void testGetGithubRepositories_UserNotFound_ReturnsNotFound() {
         String username = "unknownUser";
 
-        // Mock ObserverService behavior for user not found
         when(observerService.findRepositories(username)).thenReturn(Flux.empty());
 
-        // Perform the test
         Mono<ResponseEntity<List<RepositoryDetails>>> result
                 = observerController.getGithubRepositories(username);
 
-        // Verify the result
         StepVerifier.create(result)
                 .expectNextMatches(responseEntity ->
                         ObjectUtils.isEmpty(responseEntity.getBody()))

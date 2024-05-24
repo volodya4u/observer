@@ -37,12 +37,10 @@ class ObserverIntegrationTest {
     void findRepositories_ValidUsername_ShouldReturnRepositories() {
         String username = "validUser";
 
-        // Given
         RepositoryDetails repositoryDetails = new RepositoryDetails("repositoryName", "ownerLogin",
                 List.of(new BranchDetails("branchName", "sha")));
         given(observerService.findRepositories(username)).willReturn(Flux.just(repositoryDetails));
 
-        // When
         observerWebClient.get().uri("/repositories/{username}", username)
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
@@ -57,12 +55,10 @@ class ObserverIntegrationTest {
     void findRepositories_NonExistingUser_ShouldReturnCustomNotFoundMessage() {
         String username = "nonExistingUser";
 
-        // Given
         given(observerService
                 .findRepositories(username))
                 .willThrow(new UserNotFoundException("User not found: " + username));
 
-        // When
         observerWebClient.get().uri("/repositories/{username}", username)
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
@@ -77,12 +73,10 @@ class ObserverIntegrationTest {
     void findRepositories_InvalidAcceptHeader_ShouldReturnNotAcceptable() {
         String username = "validUser";
 
-        // Given
         RepositoryDetails repositoryDetails = new RepositoryDetails("repositoryName", "ownerLogin",
         List.of(new BranchDetails("branchName", "sha")));
         given(observerService.findRepositories(username)).willReturn(Flux.just(repositoryDetails));
 
-        // When
         observerWebClient.get().uri("/repositories/{username}", username)
                 .accept(MediaType.APPLICATION_XML)
                 .exchange()
