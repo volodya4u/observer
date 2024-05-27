@@ -26,7 +26,7 @@ public class ObserverService {
         this.observerWebClient = observerWebClient;
     }
 
-    @CircuitBreaker(name = "CircuitBreakerService", fallbackMethod = "fallbackMethod")
+    @CircuitBreaker(name = "github-api", fallbackMethod = "fallbackFindRepositories")
     public Mono<List<RepositoryDetails>> findRepositories(@NotBlank String username, boolean fork) {
 
         log.debug("Getting repositories for user: {}", username);
@@ -42,7 +42,7 @@ public class ObserverService {
                 .collectList();
     }
 
-    private Flux<RepositoryDetails> fallbackMethod(String username, boolean fork, Throwable t) {
+    public Mono<List<RepositoryDetails>> fallbackFindRepositories(String username, boolean fork, Throwable t) {
         log.error("Error getting repositories for user: {}, error: {}", username, t.getMessage());
         throw new UserNotFoundException("User not found: " + username);
     }
@@ -55,7 +55,7 @@ public class ObserverService {
                 .flux();
     }
 
-    private Flux<BranchDetails> getBranches(String repositoryFullName) {
+    public Flux<BranchDetails> getBranches(String repositoryFullName) {
         return observerWebClient.get()
                 .uri("/repos/" + repositoryFullName + "/branches")
                 .retrieve()

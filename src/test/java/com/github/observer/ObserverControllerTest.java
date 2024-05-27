@@ -12,9 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.ObjectUtils;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-
 import java.util.List;
-
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -61,5 +59,34 @@ public class ObserverControllerTest {
                 .expectNextMatches(responseEntity ->
                         ObjectUtils.isEmpty(responseEntity.getBody()))
                 .verifyComplete();
+    }
+
+    @Test
+    void testGetGithubRepositories_EmptyResponse_ReturnsNotFound() {
+        String username = "emptyUser";
+
+        when(observerService.findRepositories(username, true)).thenReturn(Mono.empty());
+
+        Mono<ResponseEntity<List<RepositoryDetails>>> result
+                = observerController.getGithubRepositories(username, true);
+
+        StepVerifier.create(result)
+                .expectNextMatches(responseEntity ->
+                        ObjectUtils.isEmpty(responseEntity.getBody()))
+                .verifyComplete();
+    }
+
+    @Test
+    void testGetGithubRepositories_InternalServerError_ReturnsInternalServerError() {
+        String username = "errorUser";
+
+        when(observerService.findRepositories(username, true)).thenReturn(Mono.error(new RuntimeException()));
+
+        Mono<ResponseEntity<List<RepositoryDetails>>> result
+                = observerController.getGithubRepositories(username, true);
+
+        StepVerifier.create(result)
+                .expectErrorMatches(throwable -> throwable instanceof RuntimeException)
+                .verify();
     }
 }

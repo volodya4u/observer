@@ -9,7 +9,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
@@ -17,9 +16,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Mono;
-
 import java.util.List;
-
 import static org.mockito.BDDMockito.given;
 
 @ExtendWith(SpringExtension.class)
@@ -56,10 +53,10 @@ class ObserverIntegrationTest {
     void findRepositories_NonExistingUser_ShouldReturnCustomNotFoundMessage() {
         String username = "nonExistingUser";
         boolean fork = true;
+        String errorMessage = "User not found: " + username;
 
-        given(observerService
-                .findRepositories(username, fork))
-                .willThrow(new UserNotFoundException("User not found: " + username));
+        given(observerService.findRepositories(username, fork))
+                .willReturn(Mono.error(new UserNotFoundException(errorMessage)));
 
         observerWebClient.get().uri("/repositories/{username}/{fork}", username, fork)
                 .accept(MediaType.APPLICATION_JSON)
@@ -67,7 +64,7 @@ class ObserverIntegrationTest {
                 .expectStatus().isNotFound()
                 .expectBody()
                 .jsonPath("$.status").isEqualTo(404)
-                .jsonPath("$.message").isEqualTo("User not found: " + username);
+                .jsonPath("$.message").isEqualTo(errorMessage);
     }
 
     @Test
@@ -77,12 +74,26 @@ class ObserverIntegrationTest {
         boolean fork = true;
 
         RepositoryDetails repositoryDetails = new RepositoryDetails("repositoryName", "ownerLogin",
-        List.of(new BranchDetails("branchName", "sha")));
+                List.of(new BranchDetails("branchName", "sha")));
         given(observerService.findRepositories(username, fork)).willReturn(Mono.just(List.of(repositoryDetails)));
 
         observerWebClient.get().uri("/repositories/{username}/{fork}", username, fork)
                 .accept(MediaType.APPLICATION_XML)
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.NOT_ACCEPTABLE);
+    }
+
+    @Test
+    @DisplayName("Should return 400 Bad Request Error when unexpected error occurs")
+    void findRepositories_InternalServerError_ShouldReturnBadRequest() {
+        String username = "validUser";
+        boolean fork = true;
+
+        given(observerService.findRepositories(username, fork)).willReturn(Mono.error(new RuntimeException()));
+
+        observerWebClient.get().uri("/repositories/{username}/{fork}", username, fork)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isEqualTo(HttpStatus.BAD_REQUEST);
     }
 }
