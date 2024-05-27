@@ -12,6 +12,10 @@ Parameters:
     Type: String
     Default: vpc-076d33d96263ac923
     Description: ID of the VPC where the subnets will be created
+  GitHubToken:
+    Type: String
+    Default: some
+    Description: GitHub Personal Access Token
 Resources:
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
@@ -101,6 +105,7 @@ Resources:
       Environment:
         Variables:
           LOG_LEVEL: INFO
+          GITHUB_TOKEN: !Ref GitHubToken
       VpcConfig:
         SecurityGroupIds:
           - sg-0165a546795c82f37

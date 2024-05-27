@@ -35,7 +35,10 @@ pipeline {
                     bat 'docker tag observer:latest 211125372735.dkr.ecr.us-east-1.amazonaws.com/observer:latest'
                     bat 'docker push 211125372735.dkr.ecr.us-east-1.amazonaws.com/observer:latest'
 
-                    bat 'aws cloudformation deploy --template-file cloudformation.yml --stack-name dev --capabilities CAPABILITY_IAM --parameter-overrides ClusterName=$CLUSTER_NAME ServiceName=$SERVICE_NAME DesiredCount=1'
+                    withCredentials([aws(accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'AWS1', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'),
+                                     usernamePassword(credentialsId: 'GITHUB_TOKEN', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                        bat 'aws cloudformation deploy --template-file cloudformation.yml --stack-name dev --capabilities CAPABILITY_IAM --parameter-overrides ClusterName=$CLUSTER_NAME ServiceName=$SERVICE_NAME GitHubToken=%PASS% DesiredCount=1'
+                    }
                 }
             }
         }

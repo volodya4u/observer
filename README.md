@@ -34,13 +34,13 @@ Additionally, it handles specific error scenarios such as a non-existent GitHub 
 To build the project, navigate to the project directory and execute:
 
 ```bash
-mvn clean install
+docker build -t observer-app .
 ```
 
 ### Running
 To run the project after building, execute:
 ```bash
-docker-compose up
+docker run -p 8090:8090 -e GITHUB_TOKEN=$GITHUB_TOKEN observer-app
 ```
 
 ## Usage
