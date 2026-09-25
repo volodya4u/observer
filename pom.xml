@@ -18,8 +18,8 @@
 		<aws-serverless-java-container.version>3.0.2</aws-serverless-java-container.version>
 		<mainClass>com.github.observer.ObserverApplication</mainClass>
 
-		<maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
-		<maven-shade-plugin.version>3.3.0</maven-shade-plugin.version>
+		<maven-compiler-plugin.version>3.16.0</maven-compiler-plugin.version>
+		<maven-shade-plugin.version>3.6.2</maven-shade-plugin.version>
 		<maven-dependency-plugin.version>3.11.0</maven-dependency-plugin.version>
 		<maven.compiler.source.version>21</maven.compiler.source.version>
 		<maven.compiler.target.version>21</maven.compiler.target.version>
@@ -56,7 +56,7 @@
 		<dependency>
 			<groupId>com.amazonaws</groupId>
 			<artifactId>aws-lambda-java-events</artifactId>
-			<version>3.11.4</version>
+			<version>3.16.1</version>
 		</dependency>
 		<dependency>
 			<groupId>com.amazonaws</groupId>
@@ -66,7 +66,7 @@
 		<dependency>
 			<groupId>com.amazonaws</groupId>
 			<artifactId>aws-lambda-java-runtime-interface-client</artifactId>
-			<version>2.5.0</version>
+			<version>2.12.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
@@ -116,7 +116,7 @@
 				<plugin>
 					<groupId>org.jacoco</groupId>
 					<artifactId>jacoco-maven-plugin</artifactId>
-					<version>0.8.11</version>
+					<version>0.8.15</version>
 				</plugin>
 			</plugins>
 		</pluginManagement>
