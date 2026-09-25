@@ -26,7 +26,7 @@ Additionally, it handles specific error scenarios such as a non-existent GitHub 
 ### Prerequisites
 
 - Java 21
-- Spring Boot 3
+- Spring Boot 4
 - Maven (for building and running)
 
 ### Building
