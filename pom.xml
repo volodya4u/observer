@@ -15,7 +15,7 @@
 	<description>Demo project for Spring Boot</description>
 	<properties>
 		<java.version>21</java.version>
-		<aws-serverless-java-container.version>3.0.2</aws-serverless-java-container.version>
+		<aws-serverless-java-container.version>3.0.5</aws-serverless-java-container.version>
 		<mainClass>com.github.observer.ObserverApplication</mainClass>
 
 		<maven-compiler-plugin.version>3.16.0</maven-compiler-plugin.version>
